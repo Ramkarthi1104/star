@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: maven-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: maven-app
+  template:
+    metadata:
+      labels:
+        app: maven-app
+    spec:
+      containers:
+      - name: maven-app
+        image: IMAGE_PLACEHOLDER   # Replaced dynamically in Jenkins
+        ports:
+        - containerPort: 8080
