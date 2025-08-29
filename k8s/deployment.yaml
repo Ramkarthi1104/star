@@ -16,4 +16,4 @@ spec:
       - name: maven-app
         image: IMAGE_PLACEHOLDER   # Replaced dynamically in Jenkins
         ports:
-        - containerPort: 8080
+        - containerPort: 8081
