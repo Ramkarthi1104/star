@@ -3,13 +3,13 @@ pipeline {
 
     environment {
         DOCKERHUB_CRED = 'dockerhub'                // Jenkins credentials ID
-        DOCKER_IMAGE = "your-dockerhub-username/maven-app:${BUILD_NUMBER}"
+        DOCKER_IMAGE = "admin580/maven-app:${BUILD_NUMBER}"
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/YourUser/YourRepo.git'
+                git branch: 'main', url: 'https://github.com/Ramkarthi1104/star.git'
             }
         }
 
