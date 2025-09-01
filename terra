@@ -1,0 +1,81 @@
+provider "aws" {
+  region     = "us-east-1"
+  access_key = "AKIASU566QWK2YIP7RNO"
+  secret_key = "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"
+}
+
+# 1) Security Group: allow SSH + HTTP
+resource "aws_security_group" "ec2_sg" {
+  name        = "ec2_security_group"
+  description = "Allow SSH and HTTP inbound traffic"
+
+  ingress {
+    description = "SSH"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "HTTP"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+# 2) Generate SSH Key Pair (private + public)
+resource "tls_private_key" "generated" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+# 3) Create AWS Key Pair from generated public key
+resource "aws_key_pair" "ec2_key" {
+  key_name   = "terraform-ec2-key"
+  public_key = tls_private_key.generated.public_key_openssh
+}
+
+# 4) Save private key locally
+resource "local_file" "private_key_pem" {
+  content  = tls_private_key.generated.private_key_pem
+  filename = "${path.module}/terraform-ec2-key.pem"
+}
+
+# 5) Fetch latest Amazon Linux 2 AMI (dynamic, no hardcoding)
+data "aws_ami" "amazon_linux" {
+  most_recent = true
+  owners      = ["amazon"]
+
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+  }
+}
+
+# 6) Create 3 EC2 Instances
+resource "aws_instance" "my_ec2" {
+  count                  = 3
+  ami                    = data.aws_ami.amazon_linux.id
+  instance_type          = "t2.micro"
+  key_name               = aws_key_pair.ec2_key.key_name
+  vpc_security_group_ids = [aws_security_group.ec2_sg.id]
+
+  tags = {
+    Name = "Terraform-EC2-${count.index + 1}"
+  }
+}
+
+# 7) Output all Public IPs
+output "ec2_public_ips" {
+  value = aws_instance.my_ec2[*].public_ip
+}
